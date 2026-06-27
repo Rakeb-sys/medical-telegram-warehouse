@@ -12,3 +12,10 @@ __pycache__/
 /config.local
 /tmp
 /cache
+logs/
+# dbt
+medical_warehouse/target/
+medical_warehouse/dbt_packages/
+medical_warehouse/logs/
+*.session
+*.session-journal

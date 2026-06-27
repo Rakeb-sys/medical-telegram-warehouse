@@ -1,5 +1,5 @@
 """
-Telegram Scraper for Ethiopian Medical and Pharmaceutical Products Seller Channelss
+Telegram Scraper for Ethiopian Medical and Pharmaceutical Products Seller Channels
 =============================================================
 Scrapes public Telegram channels and stores:
 - Raw messages as JSON (partitioned by date): data/raw/telegram_messages/YYYY-MM-DD/channel.json
