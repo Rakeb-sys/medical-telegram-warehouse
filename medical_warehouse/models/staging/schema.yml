@@ -1,0 +1,37 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: telegram_messages
+        description: "Raw scraped messages from Telegram channels"
+      - name: yolo_detections
+        description: "Raw YOLO object detection results on scraped images"
+
+models:
+  - name: stg_telegram_messages
+    description: "Cleaned and standardized Telegram messages with proper data types"
+    columns:
+      - name: message_id
+        description: "Unique identifier for each message within a channel"
+      - name: channel_name
+        description: "Username of the Telegram channel"
+      - name: channel_title
+        description: "Display title of the Telegram channel"
+      - name: message_date
+        description: "Timestamp of the message, cast to proper timestamp type"
+      - name: message_text
+        description: "Full text content of the message"
+      - name: message_length
+        description: "Character count of the message text"
+      - name: has_media
+        description: "Whether the message contains any media"
+      - name: has_image
+        description: "Whether the message has a downloaded image"
+      - name: image_path
+        description: "Local file path to the downloaded image"
+      - name: view_count
+        description: "Number of views on the message"
+      - name: forward_count
+        description: "Number of times the message was forwarded"

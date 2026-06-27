@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: dim_channels
+    description: "Dimension table with one row per Telegram channel, including type classification and aggregate stats"
+    columns:
+      - name: channel_key
+        description: "Surrogate key for the channel dimension"
+        tests:
+          - unique
+          - not_null
+      - name: channel_name
+        description: "Telegram channel username"
+        tests:
+          - not_null
+          - unique
+      - name: channel_title
+        description: "Display name of the channel"
+      - name: channel_type
+        description: "Channel category: Pharmaceutical, Cosmetics, Medical, or General"
+        tests:
+          - not_null
+      - name: first_post_date
+        description: "Earliest message timestamp from this channel"
+      - name: last_post_date
+        description: "Most recent message timestamp from this channel"
+      - name: total_posts
+        description: "Total number of messages scraped from this channel"
+      - name: avg_views
+        description: "Average view count across all messages in this channel"
+
+  - name: dim_dates
+    description: "Date dimension table for time-based analysis with calendar attributes"
+    columns:
+      - name: date_key
+        description: "Integer surrogate key in YYYYMMDD format"
+        tests:
+          - unique
+          - not_null
+      - name: full_date
+        description: "Actual calendar date"
+        tests:
+          - unique
+          - not_null
+      - name: day_of_week
+        description: "Day of week as integer (0=Sunday, 6=Saturday)"
+      - name: day_name
+        description: "Full name of the day (Monday, Tuesday, etc.)"
+      - name: week_of_year
+        description: "ISO week number within the year"
+      - name: month
+        description: "Month as integer (1-12)"
+      - name: month_name
+        description: "Full name of the month"
+      - name: quarter
+        description: "Quarter of the year (1-4)"
+      - name: year
+        description: "Calendar year"
+      - name: is_weekend
+        description: "True if Saturday or Sunday"
+
+  - name: fct_messages
+    description: "Fact table with one row per message, linked to channel and date dimensions"
+    columns:
+      - name: message_id
+        description: "Original Telegram message ID"
+        tests:
+          - not_null
+      - name: channel_key
+        description: "Foreign key to dim_channels"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_channels')
+              arguments:
+                field: channel_key
+      - name: date_key
+        description: "Foreign key to dim_dates"
+        tests:
+          - relationships:
+              to: ref('dim_dates')
+              arguments:
+                field: date_key
+      - name: message_text
+        description: "Full text content of the message"
+      - name: message_length
+        description: "Character count of the message text"
+      - name: view_count
+        description: "Number of views on the message"
+      - name: forward_count
+        description: "Number of times the message was forwarded"
+      - name: has_image
+        description: "Whether the message has a downloaded image"
+
+  - name: fct_image_detections
+    description: "Fact table with YOLO object detection results per image, linked to messages and dimensions"
+    columns:
+      - name: message_id
+        description: "Message ID linking to the source message"
+        tests:
+          - not_null
+      - name: channel_key
+        description: "Foreign key to dim_channels"
+      - name: date_key
+        description: "Foreign key to dim_dates"
+      - name: detected_class
+        description: "YOLO detected object class (person, bottle, etc.)"
+      - name: confidence_score
+        description: "Detection confidence score (0 to 1)"
+      - name: image_category
+        description: "Classification: promotional, product_display, lifestyle, or other"
