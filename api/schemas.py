@@ -1,5 +1,5 @@
 # api/schemas.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -43,3 +43,15 @@ class VisualContentStatsResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class MessageResponse(BaseModel):
+    message_id: int
+    channel_key: str
+    # If text is null or blank, default it to a placeholder string automatically
+    message_text: Optional[str] = Field(default="[No text content captured]")
+    view_count: int = Field(default=0, ge=0) # Guarantees view count is never negative
+    forward_count: int = Field(default=0, ge=0)
+    date_key: datetime
+
+    class Config:
+        from_attributes = True # Enables seamless ORM (SQLAlchemy) serialization

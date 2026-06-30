@@ -21,9 +21,13 @@ import logging
 import random
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List, Optional
 from dotenv import load_dotenv
+from src.logger_config import get_logger
+
+logger = get_logger("telegram_scraper")
+# Now it perfectly routes everything directly to logs/scrape_YYYY-MM-DD.log!
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -58,8 +62,62 @@ console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+
 # =============================================================================
-# LIVE SCRAPING (requires Telegram auth)
+# DEMO MODE IMPLEMENTATION (Fixes NameError crash)
+# =============================================================================
+
+def run_demo(base_path: str, limit: int):
+    """Generates clean structural mock data profiles mimicking real Telegram channels."""
+    logger.info(f"--- Starting Demo Mode Asset Mock Generation (limit={limit}) ---")
+    
+    mock_channels = ['CheMed123', 'lobelia4cosmetics', 'tikvahpharma', 'Pharmaimportt']
+    channel_counts = {}
+    
+    # Establish local structured storage directories
+    os.makedirs(os.path.join(base_path, "raw", "csv", TODAY), exist_ok=True)
+    os.makedirs(os.path.join(base_path, "raw", "telegram_messages", TODAY), exist_ok=True)
+    
+    for channel in mock_channels:
+        messages = []
+        channel_image_dir = os.path.join(base_path, "raw", "images", channel)
+        os.makedirs(channel_image_dir, exist_ok=True)
+        
+        for i in range(1, limit + 1):
+            # Enforce clean POSIX forward-slashes for database portability
+            clean_image_relative_path = f"data/raw/images/{channel}/{i}.jpg"
+            
+            # Write a mock file asset to simulate target lake image items
+            mock_img_file = Path(channel_image_dir) / f"{i}.jpg"
+            if not mock_img_file.exists():
+                with open(mock_img_file, "w") as img_f:
+                    img_f.write("MOCK_IMAGE_BINARY")
+            
+            messages.append({
+                "message_id": i,
+                "channel_name": channel,
+                "channel_title": f"{channel.capitalize()} Solutions Display",
+                "message_date": datetime.now(timezone.utc).isoformat(),
+                "message_text": f"Sample medical market notice text context containing paracetamol batch #{i}.",
+                "has_media": True,
+                "image_path": clean_image_relative_path,
+                "views": random.randint(100, 2500),
+                "forwards": random.randint(5, 120),
+            })
+            
+        write_channel_messages_json(
+            base_path=base_path, date_str=TODAY,
+            channel_name=channel, messages=messages
+        )
+        channel_counts[channel] = len(messages)
+        logger.info(f"Generated {len(messages)} mock rows for directory: {channel}")
+        
+    write_manifest(base_path=base_path, date_str=TODAY, channel_message_counts=channel_counts)
+    logger.info("Demo execution completed successfully.")
+
+
+# =============================================================================
+# LIVE SCRAPING
 # =============================================================================
 
 async def scrape_channel(client, channel, writer, base_path, date_str,
@@ -88,9 +146,11 @@ async def scrape_channel(client, channel, writer, base_path, date_str,
 
                 if has_media and isinstance(message.media, MessageMediaPhoto):
                     filename = f"{message.id}.jpg"
-                    image_path = os.path.join(channel_image_dir, filename)
+                    local_os_image_path = os.path.join(channel_image_dir, filename)
                     try:
-                        await client.download_media(message.media, image_path)
+                        await client.download_media(message.media, local_os_image_path)
+                        # Fix 2: Enforce predictable forward-slashes for JSON entries
+                        image_path = f"data/raw/images/{channel_name}/{filename}"
                     except Exception as e:
                         logger.warning(f"Failed to download image for message {message.id}: {e}")
                         image_path = None
@@ -225,4 +285,7 @@ Examples:
                     message_delay=args.message_delay, channel_delay=args.channel_delay,
                 )
 
-        asyncio.run(main())
+        async def run_main():
+            await main()
+
+        asyncio.run(run_main())

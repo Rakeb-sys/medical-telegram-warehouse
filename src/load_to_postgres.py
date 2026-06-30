@@ -14,6 +14,9 @@ import argparse
 import logging
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from src.logger_config import get_logger
+
+logger = get_logger("load_to_postgres")
 
 load_dotenv()
 
