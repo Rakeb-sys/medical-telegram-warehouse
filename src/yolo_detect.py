@@ -15,6 +15,9 @@ import argparse
 import random
 import logging
 from pathlib import Path
+from src.logger_config import get_logger
+
+logger = get_logger("yolo_detect")
 
 logger = logging.getLogger("yolo_detect")
 logger.setLevel(logging.INFO)
